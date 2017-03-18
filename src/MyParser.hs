@@ -27,10 +27,10 @@ instance Show LispVal where
     show = showVal
 
 
-readExpr :: String -> String
+readExpr :: String -> LispVal
 readExpr input = case parse parseExpr "lisp" input of
-    Left err -> "No match: " ++ show err
-    Right val -> "Found value: " ++ show val
+    Left err -> String $ "No match: " ++ show err
+    Right val -> val
 
 spaces :: Parser ()
 spaces = skipMany1 space
