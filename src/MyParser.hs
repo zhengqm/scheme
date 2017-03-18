@@ -11,10 +11,26 @@ data LispVal = Atom String
                 | Bool Bool
 
 
+showVal :: LispVal -> String
+showVal (Atom name) = name
+showVal (List contents) = "(" ++ showLispList contents ++ ")"
+showVal (DottedList head tail) = "(" ++ showLispList head ++ " . " ++ showVal tail ++ ")"
+showVal (Number num) = show num
+showVal (String str) = "\"" ++ str ++ "\""
+showVal (Bool True) = "#t"
+showVal (Bool False) = "#f"
+
+showLispList :: [LispVal] -> String
+showLispList = unwords . map showVal
+
+instance Show LispVal where
+    show = showVal
+
+
 readExpr :: String -> String
 readExpr input = case parse parseExpr "lisp" input of
     Left err -> "No match: " ++ show err
-    Right val -> "Found value"
+    Right val -> "Found value: " ++ show val
 
 spaces :: Parser ()
 spaces = skipMany1 space
