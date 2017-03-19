@@ -1,6 +1,6 @@
 module Evaluator where
 
-import MyParser
+import LispTypes
 
 eval :: LispVal -> LispVal
 eval val@(String _) = val

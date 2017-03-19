@@ -2,30 +2,7 @@ module MyParser where
 
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Control.Monad
-
-data LispVal = Atom String
-                | List [LispVal]
-                | DottedList [LispVal] LispVal
-                | Number Integer
-                | String String
-                | Bool Bool
-
-
-showVal :: LispVal -> String
-showVal (Atom name) = name
-showVal (List contents) = "(" ++ showLispList contents ++ ")"
-showVal (DottedList head tail) = "(" ++ showLispList head ++ " . " ++ showVal tail ++ ")"
-showVal (Number num) = show num
-showVal (String str) = "\"" ++ str ++ "\""
-showVal (Bool True) = "#t"
-showVal (Bool False) = "#f"
-
-showLispList :: [LispVal] -> String
-showLispList = unwords . map showVal
-
-instance Show LispVal where
-    show = showVal
-
+import LispTypes
 
 readExpr :: String -> LispVal
 readExpr input = case parse parseExpr "lisp" input of
