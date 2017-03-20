@@ -2,6 +2,7 @@ module LispTypes where
 
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Control.Monad.Except
+import Data.IORef
 
 data LispVal = Atom String
                 | List [LispVal]
@@ -49,8 +50,58 @@ showError (Parser parseErr)             = "Parse error at " ++ show parseErr
 
 instance Show LispError where show = showError
 
+type Env = IORef [(String, IORef LispVal)]
 
-type ThrowsError = Either LispError 
+type ThrowsError = Either LispError
+type IOThrowsError = ExceptT LispError IO
+
+nullEnv :: IO Env
+nullEnv = newIORef []
+
+liftThrows :: ThrowsError a -> IOThrowsError a
+liftThrows (Left err) = throwError err
+liftThrows (Right val) = return val
+
+runIOThrows :: IOThrowsError String -> IO String
+runIOThrows action = runExceptT (trapError action) >>= return . extractValue
+
+
+isBound :: Env -> String -> IO Bool
+isBound envRef var = do
+    env <- readIORef envRef
+    return $ case lookup var env of
+        (Just _) -> True
+        Nothing  -> False
+
+getVar :: Env -> String -> IOThrowsError LispVal
+getVar envRef var = do env <- lift $ readIORef envRef
+                       case lookup var env of
+                            Just ref -> lift $ readIORef ref
+                            Nothing    -> throwError $ UnboundVar "Getting an unbound variable" var
+
+setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
+setVar envRef var value = do env <- lift $ readIORef envRef
+                             case lookup var env of
+                                Just ref -> lift $ writeIORef ref value
+                                Nothing  -> throwError $ UnboundVar "Setting an unbound variable" var
+                             return value
+
+defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
+defineVar envRef var value = do
+    alreadyDefined <- lift $ isBound envRef var
+    if alreadyDefined
+        then setVar envRef var value >> return value
+        else lift $ do
+            valueRef <- newIORef value
+            env <- readIORef envRef
+            writeIORef envRef ((var, valueRef) : env)
+            return value
+
+bindVars :: Env -> [(String, LispVal)] -> IO Env
+bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
+    where   extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
+            addBinding (var, value) = do ref <- newIORef value
+                                         return (var, ref)
 
 -- Can be used for both Either LispError / ExceptT LispError IO 
 trapError action = catchError  action        (return . show)
