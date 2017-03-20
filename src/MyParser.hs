@@ -2,11 +2,12 @@ module MyParser where
 
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Control.Monad
+import Control.Monad.Except
 import LispTypes
 
 readExpr :: String -> ThrowsError LispVal
 readExpr input = case parse parseExpr "lisp" input of
-    Left err -> Left $ Parser err
+    Left err -> throwError $ Parser err
     Right val -> return val
 
 spaces :: Parser ()
