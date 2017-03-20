@@ -53,6 +53,7 @@ instance Show LispError where show = showError
 
 type ThrowsError = Either LispError 
 
+trapError :: ThrowsError String -> ThrowsError String
 trapError action = catchError action (return . show)
 
 extractValue :: ThrowsError a -> a
