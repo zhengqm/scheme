@@ -1,6 +1,7 @@
 module LispTypes where
 
 import Text.ParserCombinators.Parsec hiding (spaces)
+import Control.Monad.Except
 
 data LispVal = Atom String
                 | List [LispVal]
@@ -51,10 +52,9 @@ instance Show LispError where show = showError
 
 type ThrowsError = Either LispError 
 
-trapError :: ThrowsError String -> ThrowsError String
-trapError action = case action of 
-            Right str -> return str
-            Left  err -> return $ show err
+-- Can be used for both Either LispError / ExceptT LispError IO 
+trapError action = catchError  action        (return . show)
+--                           [m String]  [String -> m String].[e -> String] 
 
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val
