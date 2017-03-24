@@ -10,6 +10,9 @@ data LispVal = Atom String
                 | Number Integer
                 | String String
                 | Bool Bool
+                | PrimitiveFunc ([LispVal] -> ThrowsError LispVal)
+                | Func { params :: [String], vararg :: (Maybe String),
+                        body :: [LispVal], closure :: Env }
 
 
 showVal :: LispVal -> String
@@ -20,6 +23,11 @@ showVal (Number num) = show num
 showVal (String str) = "\"" ++ str ++ "\""
 showVal (Bool True) = "#t"
 showVal (Bool False) = "#f"
+showVal (PrimitiveFunc _) = "<primitive>"
+showVal (Func {params = args, vararg = varargs, body = body, closure = env}) = "(lambda (" ++ unwords (map show args) ++
+      (case varargs of
+         Nothing -> ""
+         Just arg -> " . " ++ arg) ++ ") ...)"
 
 showLispList :: [LispVal] -> String
 showLispList = unwords . map showVal

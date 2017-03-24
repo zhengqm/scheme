@@ -14,13 +14,11 @@ main = do
                         otherwise -> putStrLn "Program takes only 0 or 1 argument"
 
 runOne :: String -> IO ()
-runOne expr = do
-        init <- nullEnv
-        evalAndPrint init expr
+runOne expr = primitiveBindings >>= flip evalAndPrint expr
 
 runRepl :: IO ()
 runRepl = do
-    env <- nullEnv
+    env <- primitiveBindings
     until_ (== "quit") (readPrompt "Lisp>>> ") (evalAndPrint env)
 
 
