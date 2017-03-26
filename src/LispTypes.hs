@@ -3,6 +3,7 @@ module LispTypes where
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Control.Monad.Except
 import Data.IORef
+import System.IO
 
 data LispVal = Atom String
                 | List [LispVal]
@@ -10,9 +11,12 @@ data LispVal = Atom String
                 | Number Integer
                 | String String
                 | Bool Bool
+                | IOFunc ([LispVal] -> IOThrowsError LispVal)
+                | Port Handle
                 | PrimitiveFunc ([LispVal] -> ThrowsError LispVal)
                 | Func { params :: [String], vararg :: (Maybe String),
                         body :: [LispVal], closure :: Env }
+
 
 
 showVal :: LispVal -> String
@@ -28,6 +32,8 @@ showVal (Func {params = args, vararg = varargs, body = body, closure = env}) = "
       (case varargs of
          Nothing -> ""
          Just arg -> " . " ++ arg) ++ ") ...)"
+showVal (IOFunc _) = "<IO primitive>"
+showVal (Port _) = "<IO port>"
 
 showLispList :: [LispVal] -> String
 showLispList = unwords . map showVal
